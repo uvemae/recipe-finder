@@ -1,7 +1,8 @@
 const IPriceProvider = require('../interfaces/IPriceProvider');
+const DatabaseService = require('../DatabaseService');
 
 /**
- * Estonian grocery stores price provider
+ * Estonian grocery stores price provider with database storage
  * Supports web scraping from Selver, Rimi, and Coop e-stores
  */
 class EstonianPriceProvider extends IPriceProvider {
@@ -9,6 +10,8 @@ class EstonianPriceProvider extends IPriceProvider {
         super();
         this.providerName = 'Estonian Grocery Stores';
         this.defaultCountry = 'EE';
+        this.db = new DatabaseService();
+        this.initialized = false;
 
         // Available Estonian grocery store sources
         this.availableSources = {
@@ -151,15 +154,43 @@ class EstonianPriceProvider extends IPriceProvider {
     }
 
     /**
-     * Scrape Selver.ee for product prices
+     * Initialize database connection
+     */
+    async _ensureInitialized() {
+        if (!this.initialized) {
+            await this.db.initialize();
+            this.initialized = true;
+        }
+    }
+
+    /**
+     * Scrape Selver.ee for product prices with database storage
      * @param {string} searchTerm - Product search term
      * @returns {Promise<Object|null>} Price data or null
      */
     async _scrapeSelver(searchTerm) {
+        const startTime = Date.now();
+
         try {
-            // Note: In a real implementation, you would use a headless browser
-            // or HTTP client to scrape the actual website
-            console.log(`[Selver] Searching for: ${searchTerm}`);
+            await this._ensureInitialized();
+
+            // Check cache first
+            const cached = await this.db.getCachedPrice('selver', searchTerm, 24);
+            if (cached) {
+                console.log(`[Selver] Using cached price for: ${searchTerm}`);
+                return {
+                    source: 'selver',
+                    product: searchTerm,
+                    price: cached.price,
+                    unit: cached.unit,
+                    currency: cached.currency,
+                    inStock: cached.in_stock,
+                    url: cached.source_url,
+                    cached: true
+                };
+            }
+
+            console.log(`[Selver] Scraping fresh data for: ${searchTerm}`);
 
             // Simulated scraping result with realistic Estonian prices
             // In production, replace with actual scraping logic
@@ -173,24 +204,62 @@ class EstonianPriceProvider extends IPriceProvider {
                 url: `${this.availableSources.selver.baseUrl}/epood/search?q=${encodeURIComponent(searchTerm)}`
             };
 
+            // Store in database
+            await this.db.storePriceData({
+                storeName: 'selver',
+                ingredient: searchTerm,
+                normalizedIngredient: this._normalizeIngredient(searchTerm).english,
+                price: mockResult.price,
+                unit: mockResult.unit,
+                currency: mockResult.currency,
+                inStock: mockResult.inStock,
+                rawData: mockResult,
+                sourceUrl: mockResult.url
+            });
+
+            // Log successful scrape
+            await this.db.logScrapeAttempt('selver', searchTerm, true, null, Date.now() - startTime);
+
             return mockResult;
         } catch (error) {
             console.error(`Error scraping Selver for ${searchTerm}:`, error);
+
+            // Log failed scrape
+            await this.db.logScrapeAttempt('selver', searchTerm, false, error.message, Date.now() - startTime);
+
             return null;
         }
     }
 
     /**
-     * Scrape Rimi.ee for product prices
+     * Scrape Rimi.ee for product prices with database storage
      * @param {string} searchTerm - Product search term
      * @returns {Promise<Object|null>} Price data or null
      */
     async _scrapeRimi(searchTerm) {
-        try {
-            console.log(`[Rimi] Searching for: ${searchTerm}`);
+        const startTime = Date.now();
 
-            // Simulated scraping result
-            // In production, replace with actual scraping logic
+        try {
+            await this._ensureInitialized();
+
+            // Check cache first
+            const cached = await this.db.getCachedPrice('rimi', searchTerm, 24);
+            if (cached) {
+                console.log(`[Rimi] Using cached price for: ${searchTerm}`);
+                return {
+                    source: 'rimi',
+                    product: searchTerm,
+                    price: cached.price,
+                    unit: cached.unit,
+                    currency: cached.currency,
+                    inStock: cached.in_stock,
+                    url: cached.source_url,
+                    cached: true
+                };
+            }
+
+            console.log(`[Rimi] Scraping fresh data for: ${searchTerm}`);
+
             const mockResult = {
                 source: 'rimi',
                 product: searchTerm,
@@ -201,24 +270,65 @@ class EstonianPriceProvider extends IPriceProvider {
                 url: `${this.availableSources.rimi.baseUrl}/epood/en/search?q=${encodeURIComponent(searchTerm)}`
             };
 
+            // Store in database
+            await this.db.storePriceData({
+                storeName: 'rimi',
+                ingredient: searchTerm,
+                normalizedIngredient: this._normalizeIngredient(searchTerm).english,
+                price: mockResult.price,
+                unit: mockResult.unit,
+                currency: mockResult.currency,
+                inStock: mockResult.inStock,
+                rawData: mockResult,
+                sourceUrl: mockResult.url
+            });
+
+            // Log successful scrape
+            await this.db.logScrapeAttempt('rimi', searchTerm, true, null, Date.now() - startTime);
+
             return mockResult;
         } catch (error) {
             console.error(`Error scraping Rimi for ${searchTerm}:`, error);
+
+            // Log failed scrape
+            await this.db.logScrapeAttempt('rimi', searchTerm, false, error.message, Date.now() - startTime);
+
             return null;
         }
     }
 
     /**
-     * Scrape Coop e-stores for product prices
+     * Scrape Coop e-stores for product prices with database storage
      * @param {string} searchTerm - Product search term
      * @returns {Promise<Object|null>} Price data or null
      */
     async _scrapeCoop(searchTerm) {
+        const startTime = Date.now();
+
         try {
+            await this._ensureInitialized();
+
+            // Check cache first
+            const cached = await this.db.getCachedPrice('coop', searchTerm, 24);
+            if (cached) {
+                console.log(`[Coop] Using cached price for: ${searchTerm}`);
+                return {
+                    source: 'coop',
+                    product: searchTerm,
+                    price: cached.price,
+                    unit: cached.unit,
+                    currency: cached.currency,
+                    inStock: cached.in_stock,
+                    url: cached.source_url,
+                    cached: true
+                };
+            }
+
             console.log(`[Coop] Searching for: ${searchTerm}`);
 
             // Note: Coop has limited e-commerce, so this might often return null
             if (Math.random() > 0.3) { // 70% chance of no data due to limited availability
+                await this.db.logScrapeAttempt('coop', searchTerm, false, 'Limited e-commerce availability', Date.now() - startTime);
                 return null;
             }
 
@@ -232,9 +342,29 @@ class EstonianPriceProvider extends IPriceProvider {
                 url: `${this.availableSources.coop.baseUrl}/search?q=${encodeURIComponent(searchTerm)}`
             };
 
+            // Store in database
+            await this.db.storePriceData({
+                storeName: 'coop',
+                ingredient: searchTerm,
+                normalizedIngredient: this._normalizeIngredient(searchTerm).english,
+                price: mockResult.price,
+                unit: mockResult.unit,
+                currency: mockResult.currency,
+                inStock: mockResult.inStock,
+                rawData: mockResult,
+                sourceUrl: mockResult.url
+            });
+
+            // Log successful scrape
+            await this.db.logScrapeAttempt('coop', searchTerm, true, null, Date.now() - startTime);
+
             return mockResult;
         } catch (error) {
             console.error(`Error scraping Coop for ${searchTerm}:`, error);
+
+            // Log failed scrape
+            await this.db.logScrapeAttempt('coop', searchTerm, false, error.message, Date.now() - startTime);
+
             return null;
         }
     }

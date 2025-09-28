@@ -5,13 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b439c157-6da2-42e8-ad89-3ceaef518cb8" name="Changes" comment="WIP">
-      <change afterPath="$PROJECT_DIR$/backend/services/providers/EstonianPriceProvider.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/src/components/SourceConfigDialog.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/DatabaseService.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/DatabaseStats.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/server.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/services/PriceServiceFactory.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/services/PriceServiceFactory.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/RecipeDetailView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/RecipeDetailView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/services/providers/EstonianPriceProvider.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/services/providers/EstonianPriceProvider.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/HomeView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/HomeView.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,7 +78,7 @@
       <updated>1758979875372</updated>
       <workItem from="1758979876894" duration="3819000" />
       <workItem from="1759045270797" duration="2615000" />
-      <workItem from="1759052136168" duration="9350000" />
+      <workItem from="1759052136168" duration="10054000" />
     </task>
     <task id="LOCAL-00001" summary="WIP">
       <option name="closed" value="true" />
@@ -94,7 +96,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759065015102</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="WIP">
+      <option name="closed" value="true" />
+      <created>1759067744526</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1759067744526</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

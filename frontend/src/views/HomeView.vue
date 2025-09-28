@@ -20,12 +20,17 @@
         </div>
       </div>
     </div>
-    <RecipeList />
+
+    <div class="content-section">
+      <DatabaseStats />
+      <RecipeList />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import RecipeList from '@/components/RecipeList.vue'
+import DatabaseStats from '@/components/DatabaseStats.vue'
 </script>
 
 <style scoped>
@@ -104,6 +109,12 @@ import RecipeList from '@/components/RecipeList.vue'
   opacity: 0.9;
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.content-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
 }
 
 @media (max-width: 768px) {
