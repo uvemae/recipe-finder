@@ -301,11 +301,35 @@ class EstonianPriceProvider extends IPriceProvider {
     async _normalizeIngredient(ingredient) {
         const cleaned = ingredient.toLowerCase()
             .replace(/^\d+[\s\/]*\w*\s+/g, '') // Remove quantities
-            .replace(/\b(cup|cups|tsp|tbsp|tablespoon|teaspoon|pound|pounds|oz|ounce|clove|cloves|sprig|sprigs|leaf|leaves|fresh|dried|chopped|diced|minced|crushed|peeled|large|medium|small|red|white|green|yellow)\b/gi, '')
+            .replace(/\b(cup|cups|tsp|tbsp|tablespoon|teaspoon|pound|pounds|lb|oz|ounce|clove|cloves|sprig|sprigs|leaf|leaves|fresh|dried|chopped|diced|minced|crushed|peeled|large|medium|small|red|white|green|yellow|cooked|raw|whole|ground|sliced|grated|shredded|can|pot|handful|to serve|garnish|finely|roughly)\b/gi, '')
             .replace(/\s+/g, ' ')
             .trim();
 
-        // Find Estonian equivalent - prioritize longer/more specific matches
+        // 1. First try database translations (highest priority)
+        try {
+            const dbTranslation = await this.db.getQuery(
+                `SELECT estonian_name, category, confidence FROM ingredient_translations
+                 WHERE LOWER(english_name) = LOWER(?)`,
+                [cleaned]
+            );
+
+            if (dbTranslation) {
+                console.log(`[Database] Found translation: ${cleaned} → ${dbTranslation.estonian_name}`);
+                return {
+                    english: cleaned,
+                    estonian: dbTranslation.estonian_name,
+                    category: dbTranslation.category || 'other',
+                    searchTerm: dbTranslation.estonian_name,
+                    translationFound: true,
+                    confidence: dbTranslation.confidence || 'high',
+                    translationSource: 'database'
+                };
+            }
+        } catch (error) {
+            console.error('[Database Translation] Error:', error);
+        }
+
+        // 2. Try legacy hardcoded Estonian dictionary (for backwards compatibility)
         const estonianMatch = Object.entries(this.estonianIngredients)
             .sort(([a], [b]) => b.length - a.length) // Sort by length descending
             .find(([key, data]) =>
@@ -314,17 +338,19 @@ class EstonianPriceProvider extends IPriceProvider {
 
         if (estonianMatch) {
             const [englishName, estonianData] = estonianMatch;
+            console.log(`[Legacy Dictionary] Found translation: ${cleaned} → ${estonianData.et}`);
             return {
                 english: englishName,
                 estonian: estonianData.et,
                 category: estonianData.category,
                 searchTerm: estonianData.et,
                 translationFound: true,
-                confidence: 'high'
+                confidence: 'high',
+                translationSource: 'legacy'
             };
         }
 
-        // No translation found in local dictionary - try API translation
+        // 3. Try API translation as fallback
         try {
             console.log(`[Translation API] Attempting translation for: ${cleaned}`);
             const apiResult = await this.translator.translateIngredient(cleaned);
@@ -345,7 +371,7 @@ class EstonianPriceProvider extends IPriceProvider {
             console.error('[Translation API] Error:', error);
         }
 
-        // No translation found anywhere - will use fallback prices
+        // 4. No translation found anywhere - will use fallback prices
         console.log(`[Translation] No translation found for: ${cleaned}`);
         return {
             english: cleaned,

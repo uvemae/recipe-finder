@@ -300,6 +300,7 @@ onMounted(() => {
   padding: 25px 30px;
   border-radius: 12px;
   border-left: 4px solid #42b883;
+  border-right: 4px solid #42b883;
   list-style: none;
   counter-reset: step-counter;
 }
@@ -389,7 +390,12 @@ onMounted(() => {
 
 .ingredients-list {
   list-style: none;
-  padding: 0;
+  padding: 25px 30px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #42b883;
+  border-right: 4px solid #42b883;
+  margin: 0;
 }
 
 .ingredients-list li {
@@ -414,6 +420,7 @@ onMounted(() => {
   padding: 20px;
   border-radius: 8px;
   border-left: 4px solid #42b883;
+  border-right: 4px solid #42b883;
 }
 
 .total-cost {
