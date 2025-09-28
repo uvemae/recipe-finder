@@ -45,3 +45,6 @@ Thumbs.db
 # Cache directories
 .cache/
 .parcel-cache/
+
+# Application data
+data/
