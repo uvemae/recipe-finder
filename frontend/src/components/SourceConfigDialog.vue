@@ -33,7 +33,7 @@
         </div>
 
         <div class="cost-section">
-          <h2>Cost Estimation (Estonia)</h2>
+          <h2>Cost Estimation (Germany)</h2>
           <div v-if="costLoading" class="calculating">
             Calculating costs...
           </div>
@@ -64,6 +64,13 @@
         </div>
       </div>
     </div>
+
+    <!-- Source Configuration Dialog -->
+    <SourceConfigDialog
+      :is-open="showSourceConfig"
+      @close="showSourceConfig = false"
+      @updated="handleSourceUpdate"
+    />
   </div>
 </template>
 
@@ -109,7 +116,7 @@ const calculateCost = async () => {
     costCalculation.value = await ApiService.calculateRecipeCost(
       recipe.value.ingredients,
       recipe.value.servings,
-      'EE' // Estonia
+      'DE' // Germany as default
     )
   } catch (err) {
     console.error('Error calculating cost:', err)
@@ -208,12 +215,68 @@ onMounted(() => {
   }
 }
 
-.ingredients-section h2,
 .cost-section h2 {
   color: #2c3e50;
   border-bottom: 2px solid #42b883;
   padding-bottom: 8px;
   margin-bottom: 20px;
+}
+
+.cost-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.cost-header h2 {
+  margin-bottom: 0;
+}
+
+.config-button {
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666;
+}
+
+.config-button:hover {
+  background-color: #e9ecef;
+  border-color: #42b883;
+  color: #42b883;
+}
+
+.source-info {
+  margin: 10px 0;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #666;
+}
+
+.source-badge {
+  display: inline-block;
+  background-color: #42b883;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 8px;
+}
+
+.fallback-badge {
+  display: inline-block;
+  background-color: #ffc107;
+  color: #212529;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 8px;
 }
 
 .ingredients-list {

@@ -5,14 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="b439c157-6da2-42e8-ad89-3ceaef518cb8" name="Changes" comment="WIP">
-      <change afterPath="$PROJECT_DIR$/backend/services/PriceServiceFactory.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/services/interfaces/IPriceProvider.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/services/providers/NumbeoProvider.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/providers/EstonianPriceProvider.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/SourceConfigDialog.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/server.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/App.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/App.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/services/PriceServiceFactory.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/services/PriceServiceFactory.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/services/api.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/services/api.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/views/HomeView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/HomeView.vue" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/frontend/src/views/RecipeDetailView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/RecipeDetailView.vue" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -78,7 +76,7 @@
       <updated>1758979875372</updated>
       <workItem from="1758979876894" duration="3819000" />
       <workItem from="1759045270797" duration="2615000" />
-      <workItem from="1759052136168" duration="7109000" />
+      <workItem from="1759052136168" duration="9350000" />
     </task>
     <task id="LOCAL-00001" summary="WIP">
       <option name="closed" value="true" />
@@ -88,7 +86,15 @@
       <option name="project" value="LOCAL" />
       <updated>1759059838030</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="WIP">
+      <option name="closed" value="true" />
+      <created>1759065015102</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1759065015102</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

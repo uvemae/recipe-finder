@@ -98,4 +98,36 @@ export class ApiService {
       throw error
     }
   }
+
+  /**
+   * Get available price sources
+   */
+  static async getPriceSources(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/prices/sources`)
+      return await this.handleResponse<any>(response)
+    } catch (error) {
+      console.error('Error fetching price sources:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Configure active price sources
+   */
+  static async configurePriceSources(sources: string[]): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/prices/sources`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sources })
+      })
+      return await this.handleResponse<any>(response)
+    } catch (error) {
+      console.error('Error configuring price sources:', error)
+      throw error
+    }
+  }
 }

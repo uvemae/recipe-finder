@@ -9,7 +9,12 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 
 // Initialize services
@@ -221,6 +226,84 @@ app.get('/api/prices/countries', asyncHandler(async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch supported countries',
+            message: error.message
+        });
+    }
+}));
+
+/**
+ * Get available price sources for Estonian provider
+ */
+app.get('/api/prices/sources', asyncHandler(async (req, res) => {
+    try {
+        if (priceProvider.getProviderName() === 'Estonian Grocery Stores') {
+            const availableSources = priceProvider.getAvailableSources();
+            const activeSources = priceProvider.getActiveSources();
+
+            res.json({
+                success: true,
+                data: {
+                    available: availableSources,
+                    active: activeSources
+                },
+                provider: priceProvider.getProviderName()
+            });
+        } else {
+            res.json({
+                success: true,
+                data: {
+                    available: {},
+                    active: [],
+                    message: 'Source configuration only available for Estonian provider'
+                },
+                provider: priceProvider.getProviderName()
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching price sources:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch price sources',
+            message: error.message
+        });
+    }
+}));
+
+/**
+ * Configure active price sources for Estonian provider
+ */
+app.post('/api/prices/sources', asyncHandler(async (req, res) => {
+    try {
+        const { sources } = req.body;
+
+        if (!Array.isArray(sources) || sources.length === 0) {
+            throw new Error('Sources array is required and must not be empty');
+        }
+
+        if (priceProvider.getProviderName() === 'Estonian Grocery Stores') {
+            priceProvider.setActiveSources(sources);
+
+            res.json({
+                success: true,
+                data: {
+                    activeSources: priceProvider.getActiveSources(),
+                    message: 'Price sources updated successfully'
+                },
+                provider: priceProvider.getProviderName()
+            });
+        } else {
+            res.status(400).json({
+                success: false,
+                error: 'Source configuration only available for Estonian provider',
+                message: 'Current provider does not support source configuration'
+            });
+        }
+    } catch (error) {
+        console.error('Error configuring price sources:', error);
+        const statusCode = error.message.includes('required') || error.message.includes('must') ? 400 : 500;
+        res.status(statusCode).json({
+            success: false,
+            error: 'Failed to configure price sources',
             message: error.message
         });
     }

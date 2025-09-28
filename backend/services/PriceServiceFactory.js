@@ -1,4 +1,5 @@
 const NumbeoProvider = require('./providers/NumbeoProvider');
+const EstonianPriceProvider = require('./providers/EstonianPriceProvider');
 
 /**
  * Factory for creating price service providers
@@ -7,8 +8,8 @@ const NumbeoProvider = require('./providers/NumbeoProvider');
 class PriceServiceFactory {
     constructor() {
         this.providers = new Map();
-        this.defaultProvider = 'numbeo';
-        this.defaultCountry = 'DE'; // Germany as default
+        this.defaultProvider = 'estonian'; // Changed to Estonian provider
+        this.defaultCountry = 'EE'; // Estonia as default
 
         // Register available providers
         this._registerProviders();
@@ -20,6 +21,7 @@ class PriceServiceFactory {
      */
     _registerProviders() {
         this.providers.set('numbeo', NumbeoProvider);
+        this.providers.set('estonian', EstonianPriceProvider);
         // Future providers can be added here:
         // this.providers.set('eurostat', EurostatProvider);
         // this.providers.set('supermarket', SupermarketProvider);
