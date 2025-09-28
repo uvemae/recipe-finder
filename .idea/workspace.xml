@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b439c157-6da2-42e8-ad89-3ceaef518cb8" name="Changes" comment="" />
+    <list default="true" id="b439c157-6da2-42e8-ad89-3ceaef518cb8" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/backend/services/RecipeServiceFactory.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/interfaces/IRecipeProvider.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/interfaces/interfaces.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/providers/TheMealDBProvider.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/providers/providers.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/services/services.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/components/RecipeList.vue" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/api.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/services/priceService.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/types/recipe.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/src/views/RecipeDetailView.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/server.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/server.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/router/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/router/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/views/HomeView.vue" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/views/HomeView.vue" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -27,6 +44,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "git-widget-placeholder": "master",
     "ignore.virus.scanning.warn.message": "true",
     "kotlin-language-version-configured": "true",
@@ -36,9 +54,20 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
+    "onboarding.tips.debug.path": "C:/_IT/PROJECTS/recipe-finder/backend/services/providers/src/Main.java",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "terminal",
+    "ts.external.directory.path": "C:\\_IT\\PROJECTS\\recipe-finder\\frontend\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\_IT\PROJECTS\recipe-finder\backend\services" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -56,11 +85,53 @@
       <updated>1758979875372</updated>
       <workItem from="1758979876894" duration="3819000" />
       <workItem from="1759045270797" duration="2615000" />
-      <workItem from="1759052136168" duration="1814000" />
+      <workItem from="1759052136168" duration="5575000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/src/Main.java</url>
+          <line>11</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/services/src/Main.java</url>
+          <line>11</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/services/interfaces/src/Main.java</url>
+          <line>11</line>
+          <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/services/interfaces/IRecipeProvider.js/src/Main.java</url>
+          <line>11</line>
+          <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/backend/services/providers/src/Main.java</url>
+          <line>11</line>
+          <option name="timeStamp" value="6" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

@@ -3,8 +3,10 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/backend/backend.iml" filepath="$PROJECT_DIR$/backend/backend.iml" />
-      <module fileurl="file://$PROJECT_DIR$/frontend/frontend.iml" filepath="$PROJECT_DIR$/frontend/frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/backend/services/interfaces/interfaces.iml" filepath="$PROJECT_DIR$/backend/services/interfaces/interfaces.iml" />
+      <module fileurl="file://$PROJECT_DIR$/backend/services/providers/providers.iml" filepath="$PROJECT_DIR$/backend/services/providers/providers.iml" />
       <module fileurl="file://$PROJECT_DIR$/recipe-finder.iml" filepath="$PROJECT_DIR$/recipe-finder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/backend/services/services.iml" filepath="$PROJECT_DIR$/backend/services/services.iml" />
     </modules>
   </component>
 </project>
