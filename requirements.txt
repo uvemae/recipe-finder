@@ -1,0 +1,53 @@
+# Recipe Finder - System Requirements
+
+## Node.js
+- Version: 16.0.0 or higher
+- npm: 7.0.0 or higher
+
+## System Dependencies
+- Git (for cloning repository)
+- Chrome/Chromium (for Puppeteer web scraping)
+
+## Node.js Dependencies
+
+### Backend (backend/package.json)
+- express: ^4.18.0 - Web server framework
+- sqlite3: ^5.1.0 - SQLite database driver
+- puppeteer: ^21.0.0 - Web scraping for grocery prices
+- cors: ^2.8.5 - Cross-origin resource sharing
+- helmet: ^7.0.0 - Security middleware
+
+### Frontend (frontend/package.json)
+- vue: ^3.3.0 - Vue.js framework
+- typescript: ^5.0.0 - TypeScript support
+- vite: ^4.4.0 - Build tool and dev server
+- @vue/composition-api: Latest - Vue 3 composition API
+
+## Optional Dependencies
+- Estonian Language Institute API access (for enhanced translations)
+- Docker (for containerized deployment)
+
+## Installation Commands
+
+```bash
+# Install backend dependencies
+cd backend && npm install
+
+# Install frontend dependencies
+cd frontend && npm install
+
+# Start development servers
+npm run dev  # Frontend
+node server.js  # Backend
+```
+
+## Database
+- SQLite database automatically created on first run
+- No additional database installation required
+- Data stored in `data/prices.db`
+
+## Browser Support
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
