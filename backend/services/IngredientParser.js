@@ -4,6 +4,51 @@
  */
 class IngredientParser {
     constructor() {
+        // Realistic weights for common ingredients (in kg)
+        this.ingredientWeights = {
+            // Vegetables
+            'onion': 0.15,
+            'onions': 0.15,
+            'shallot': 0.05,
+            'shallots': 0.05,
+            'carrot': 0.1,
+            'carrots': 0.1,
+            'turnip': 0.25,
+            'turnips': 0.25,
+            'celeriac': 0.8,
+            'potato': 0.15,
+            'potatoes': 0.15,
+
+            // Herbs (very small weights)
+            'sprig': 0.002,
+            'sprigs': 0.002,
+            'thyme': 0.002,
+            'oregano': 0.002,
+            'rosemary': 0.002,
+            'parsley': 0.002,
+            'basil': 0.002,
+
+            // Proteins
+            'egg': 0.06,
+            'eggs': 0.06,
+            'egg yolk': 0.02,
+            'egg yolks': 0.02,
+            'egg white': 0.04,
+            'egg whites': 0.04,
+
+            // Fruits
+            'lemon': 0.1,
+            'lemons': 0.1,
+            'lime': 0.05,
+            'limes': 0.05,
+            'apple': 0.18,
+            'apples': 0.18,
+
+            // Default fallback for unknown pieces
+            'piece': 0.1,
+            'pieces': 0.1
+        };
+
         this.unitConversions = {
             // Volume conversions to liters
             volume: {
@@ -51,7 +96,9 @@ class IngredientParser {
                 'dash': 0.006,       // ~6g
                 'sprinkle': 0.002,   // ~2g
                 'hint': 0.0005,      // ~0.5g
-                'touch': 0.0005      // ~0.5g
+                'touch': 0.0005,     // ~0.5g
+                'sprig': 0.002,      // ~2g per sprig
+                'sprigs': 0.002      // ~2g per sprig
             },
 
             // Count-based items
@@ -72,7 +119,7 @@ class IngredientParser {
             // "1kg Beef", "2.5 cups Flour", "200ml Wine"
             /^(\d+(?:\.\d+)?)\s*(kg|g|l|ml|cup|cups|tbsp|tbs|tablespoon|tablespoons|tsp|teaspoon|teaspoons|oz|ounce|ounces|lb|pound|pounds|lbs|fl\s*oz|fluid\s*ounce|pint|quart|liter|litre|milliliter|millilitre|gram|grams|kilogram|kilograms)\s+(.+)$/i,
 
-            // "pinch Salt", "dash Pepper", "3 sprigs Thyme"
+            // "pinch Salt", "dash Pepper", "3 sprigs Thyme" - special small units
             /^(\d+(?:\.\d+)?)?\s*(pinch|dash|sprinkle|hint|touch|sprig|sprigs)\s+(.+)$/i,
 
             // "2 chopped Carrots", "1 finely sliced Onion"
@@ -136,9 +183,9 @@ class IngredientParser {
             ingredient = match[1].trim();
         }
 
-        // Determine unit type and normalize
+        // Determine unit type and normalize with ingredient context
         const unitType = this._getUnitType(unit);
-        const normalized = this._normalizeToStandardUnit(quantity, unit, unitType);
+        const normalized = this._normalizeWithContext(quantity, unit, unitType, ingredient);
 
         return {
             original,
@@ -239,6 +286,73 @@ class IngredientParser {
      */
     parseMultipleIngredients(ingredients) {
         return ingredients.map(ingredient => this.parseIngredient(ingredient));
+    }
+
+    /**
+     * Get realistic weight for an ingredient based on its name
+     * @param {string} ingredientName - Name of the ingredient
+     * @returns {number} Weight in kg
+     * @private
+     */
+    _getRealisticWeight(ingredientName) {
+        const name = ingredientName.toLowerCase().trim();
+
+        // Check for exact matches first
+        if (this.ingredientWeights[name]) {
+            return this.ingredientWeights[name];
+        }
+
+        // Check for partial matches
+        for (const [key, weight] of Object.entries(this.ingredientWeights)) {
+            if (name.includes(key) || key.includes(name)) {
+                return weight;
+            }
+        }
+
+        // Default fallback weight for unknown ingredients
+        return this.ingredientWeights['piece'];
+    }
+
+    /**
+     * Extract main ingredient name from a complex string
+     * @param {string} ingredientText - Full ingredient text
+     * @returns {string} Main ingredient name
+     * @private
+     */
+    _getMainIngredient(ingredientText) {
+        // For unit-based ingredients, return the unit itself (like "sprig", "piece")
+        const cleanText = ingredientText.toLowerCase().trim();
+
+        // If it's a known unit, return it
+        if (this.ingredientWeights[cleanText]) {
+            return cleanText;
+        }
+
+        // Otherwise return the full text for matching
+        return cleanText;
+    }
+
+    /**
+     * Enhanced normalization that considers ingredient context
+     * @param {number} quantity
+     * @param {string} unit
+     * @param {string} unitType
+     * @param {string} ingredient - The ingredient name for context
+     * @returns {Object} Normalized quantity and unit
+     * @private
+     */
+    _normalizeWithContext(quantity, unit, unitType, ingredient) {
+        if (unitType === 'count') {
+            // Use ingredient-specific realistic weight
+            const realWeight = this._getRealisticWeight(ingredient);
+            return {
+                quantity: quantity * realWeight,
+                unit: 'kg'
+            };
+        }
+
+        // Use existing logic for other types
+        return this._normalizeToStandardUnit(quantity, unit, unitType);
     }
 
     /**
