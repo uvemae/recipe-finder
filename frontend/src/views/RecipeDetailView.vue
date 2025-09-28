@@ -22,18 +22,34 @@
         </div>
       </div>
 
+      <!-- Recipe Picture -->
+      <div class="recipe-picture" v-if="recipe.image">
+        <img :src="recipe.image" :alt="recipe.name" class="recipe-image" />
+      </div>
+
+      <!-- Cooking Instructions -->
+      <div class="instructions-section" v-if="recipe.instructions && recipe.instructions.length > 0">
+        <h2>Cooking Instructions</h2>
+        <ol class="instructions-list">
+          <li v-for="(instruction, index) in recipe.instructions" :key="index" class="instruction-step">
+            {{ instruction }}
+          </li>
+        </ol>
+      </div>
+
       <div class="recipe-body">
         <div class="ingredients-section">
-          <h2>Ingredients</h2>
+          <h2>🛒 Ingredients</h2>
           <ul class="ingredients-list">
             <li v-for="ingredient in recipe.ingredients" :key="ingredient">
+              <span class="ingredient-bullet">•</span>
               {{ ingredient }}
             </li>
           </ul>
         </div>
 
         <div class="cost-section">
-          <h2>Cost Estimation (Estonia)</h2>
+          <h2>💰 Cost Estimation (Estonia)</h2>
           <div v-if="costLoading" class="calculating">
             Calculating costs...
           </div>
@@ -195,6 +211,79 @@ onMounted(() => {
   color: #721c24;
 }
 
+/* Recipe Picture */
+.recipe-picture {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.recipe-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 400px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.recipe-image:hover {
+  transform: scale(1.02);
+}
+
+/* Cooking Instructions */
+.instructions-section {
+  margin: 40px 0;
+}
+
+.instructions-section h2 {
+  color: #2c3e50;
+  border-bottom: 2px solid #42b883;
+  padding-bottom: 8px;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.instructions-list {
+  background: #f8f9fa;
+  padding: 25px 30px;
+  border-radius: 12px;
+  border-left: 4px solid #42b883;
+  list-style: none;
+  counter-reset: step-counter;
+}
+
+.instruction-step {
+  counter-increment: step-counter;
+  position: relative;
+  padding: 15px 0 15px 50px;
+  margin-bottom: 15px;
+  line-height: 1.6;
+  font-size: 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.instruction-step:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.instruction-step::before {
+  content: counter(step-counter);
+  position: absolute;
+  left: 0;
+  top: 15px;
+  width: 30px;
+  height: 30px;
+  background: #42b883;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 14px;
+}
+
 .recipe-body {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -205,6 +294,36 @@ onMounted(() => {
   .recipe-body {
     grid-template-columns: 1fr;
     gap: 30px;
+  }
+
+  .recipe-meta {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .recipe-header h1 {
+    font-size: 2em;
+  }
+
+  .instructions-list {
+    padding: 20px 25px;
+  }
+
+  .instruction-step {
+    padding: 12px 0 12px 45px;
+    font-size: 15px;
+  }
+
+  .instruction-step::before {
+    width: 25px;
+    height: 25px;
+    font-size: 12px;
+    top: 12px;
+  }
+
+  .instructions-section h2 {
+    font-size: 20px;
   }
 }
 
@@ -222,9 +341,20 @@ onMounted(() => {
 }
 
 .ingredients-list li {
-  padding: 8px 0;
+  padding: 12px 0;
   border-bottom: 1px solid #eee;
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  line-height: 1.5;
+}
+
+.ingredient-bullet {
+  color: #42b883;
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 12px;
+  min-width: 20px;
 }
 
 .cost-display {

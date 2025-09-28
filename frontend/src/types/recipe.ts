@@ -2,9 +2,16 @@ export interface Recipe {
   id: number
   name: string
   ingredients: string[]
+  instructions?: string[]
   prepTime: number
   difficulty: 'easy' | 'medium' | 'hard'
   servings: number
+  cuisine?: string
+  category?: string
+  image?: string
+  tags?: string[]
+  videoUrl?: string
+  source?: string
 }
 
 export interface IngredientPrice {
