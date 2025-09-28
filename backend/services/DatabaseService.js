@@ -18,6 +18,46 @@ class DatabaseService {
     }
 
     /**
+     * Translate ingredient from English to local language
+     */
+    async translateIngredient(englishName, country = 'EE') {
+        const result = await this.getQuery(
+            `SELECT local_name, local_name_alt FROM product_catalog 
+       WHERE LOWER(english_name) = LOWER(?) AND country = ?`,
+            [englishName, country]
+        );
+
+        return result ? result.local_name : null;
+    }
+
+    /**
+     * Log translation gap when ingredient can't be translated
+     */
+    async logTranslationGap(englishIngredient, country = 'EE') {
+        await this.runQuery(
+            `INSERT OR REPLACE INTO translation_gaps 
+       (english_ingredient, country, search_attempts, last_attempted)
+       VALUES (?, ?, 
+         COALESCE((SELECT search_attempts + 1 FROM translation_gaps WHERE english_ingredient = ? AND country = ?), 1),
+         CURRENT_TIMESTAMP)`,
+            [englishIngredient, country, englishIngredient, country]
+        );
+    }
+
+    /**
+     * Get translation gaps for frontend display
+     */
+    async getTranslationGaps(limit = 20) {
+        return await this.getAllQuery(
+            `SELECT english_ingredient, search_attempts, last_attempted 
+       FROM translation_gaps 
+       ORDER BY search_attempts DESC, last_attempted DESC 
+       LIMIT ?`,
+            [limit]
+        );
+    }
+
+    /**
      * Create necessary directories
      */
     async initializeDirectories() {
@@ -102,6 +142,74 @@ class DatabaseService {
         cost_calculation_json TEXT,
         calculated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         expires_at DATETIME
+      )`,
+
+            // Product catalog for multi-language ingredient translations
+            `CREATE TABLE IF NOT EXISTS product_catalog (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        country TEXT NOT NULL DEFAULT 'EE',
+        english_name TEXT NOT NULL,
+        local_name TEXT,
+        local_name_alt TEXT,
+        category TEXT,
+        typical_weight_g INTEGER,
+        avg_price_eur DECIMAL(10,2),
+        unit_type TEXT,
+        image_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+            // Translation gaps tracking
+            `CREATE TABLE IF NOT EXISTS translation_gaps (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        english_ingredient TEXT NOT NULL,
+        country TEXT DEFAULT 'EE',
+        search_attempts INTEGER DEFAULT 1,
+        last_attempted DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(english_ingredient, country)
+      )`,
+
+            // Parsed ingredients table - stores parsed recipe ingredient data
+            `CREATE TABLE IF NOT EXISTS parsed_ingredients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        original_text TEXT NOT NULL,
+        quantity REAL NOT NULL,
+        unit TEXT NOT NULL,
+        unit_type TEXT NOT NULL,
+        ingredient_name TEXT NOT NULL,
+        normalized_quantity REAL NOT NULL,
+        normalized_unit TEXT NOT NULL,
+        parse_success BOOLEAN DEFAULT 1,
+        fallback_used BOOLEAN DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+            // Recipe calculations table - stores cost calculations with parsed ingredients
+            `CREATE TABLE IF NOT EXISTS recipe_calculations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        recipe_id TEXT,
+        recipe_name TEXT,
+        total_cost REAL NOT NULL,
+        cost_per_serving REAL NOT NULL,
+        servings INTEGER DEFAULT 4,
+        currency TEXT DEFAULT 'EUR',
+        country TEXT DEFAULT 'EE',
+        provider_name TEXT,
+        calculation_metadata TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`,
+
+            // Recipe ingredients mapping table
+            `CREATE TABLE IF NOT EXISTS recipe_ingredients (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        calculation_id INTEGER NOT NULL,
+        parsed_ingredient_id INTEGER NOT NULL,
+        ingredient_cost REAL NOT NULL,
+        price_per_unit REAL NOT NULL,
+        price_unit TEXT NOT NULL,
+        source_store TEXT,
+        FOREIGN KEY (calculation_id) REFERENCES recipe_calculations(id),
+        FOREIGN KEY (parsed_ingredient_id) REFERENCES parsed_ingredients(id)
       )`
         ];
 
@@ -111,6 +219,9 @@ class DatabaseService {
 
         // Insert default stores
         await this.insertDefaultStores();
+
+        // Insert seed product translations
+        await this.insertSeedProducts();
 
         console.log('Database tables created successfully');
     }
@@ -129,6 +240,43 @@ class DatabaseService {
             await this.runQuery(
                 `INSERT OR IGNORE INTO stores (name, country, base_url) VALUES (?, ?, ?)`,
                 [store.name, store.country, store.base_url]
+            );
+        }
+    }
+
+    /**
+     * Insert seed product data for Estonian translations
+     */
+    async insertSeedProducts() {
+        const products = [
+            { english: 'beef', estonian: 'veiseliha', category: 'meat', weight: 1000, price: 12.99, unit: 'kg' },
+            { english: 'chicken', estonian: 'kana', category: 'meat', weight: 1000, price: 6.99, unit: 'kg' },
+            { english: 'pork', estonian: 'sealiha', category: 'meat', weight: 1000, price: 8.49, unit: 'kg' },
+            { english: 'milk', estonian: 'piim', category: 'dairy', weight: 1000, price: 1.29, unit: 'liter' },
+            { english: 'bread', estonian: 'leib', category: 'bakery', weight: 500, price: 1.89, unit: 'loaf' },
+            { english: 'butter', estonian: 'või', category: 'dairy', weight: 500, price: 3.49, unit: '500g' },
+            { english: 'cheese', estonian: 'juust', category: 'dairy', weight: 1000, price: 9.99, unit: 'kg' },
+            { english: 'eggs', estonian: 'munad', category: 'dairy', weight: 600, price: 2.79, unit: '10pcs' },
+            { english: 'potatoes', estonian: 'kartulid', category: 'vegetables', weight: 1000, price: 1.49, unit: 'kg' },
+            { english: 'tomatoes', estonian: 'tomatid', category: 'vegetables', weight: 1000, price: 3.99, unit: 'kg' },
+            { english: 'onions', estonian: 'sibulad', category: 'vegetables', weight: 1000, price: 1.39, unit: 'kg' },
+            { english: 'carrots', estonian: 'porgandid', category: 'vegetables', weight: 1000, price: 1.59, unit: 'kg' },
+            { english: 'apples', estonian: 'õunad', category: 'fruits', weight: 1000, price: 2.49, unit: 'kg' },
+            { english: 'bananas', estonian: 'banaanid', category: 'fruits', weight: 1000, price: 1.99, unit: 'kg' },
+            { english: 'flour', estonian: 'jahu', category: 'baking', weight: 1000, price: 1.79, unit: 'kg' },
+            { english: 'sugar', estonian: 'suhkur', category: 'baking', weight: 1000, price: 1.69, unit: 'kg' },
+            { english: 'rice', estonian: 'riis', category: 'grains', weight: 1000, price: 2.99, unit: 'kg' },
+            { english: 'pasta', estonian: 'pasta', category: 'grains', weight: 500, price: 1.99, unit: '500g' },
+            { english: 'oil', estonian: 'õli', category: 'cooking', weight: 1000, price: 3.49, unit: 'liter' },
+            { english: 'salt', estonian: 'sool', category: 'spices', weight: 1000, price: 0.99, unit: 'kg' }
+        ];
+
+        for (const product of products) {
+            await this.runQuery(
+                `INSERT OR IGNORE INTO product_catalog 
+         (english_name, local_name, category, typical_weight_g, avg_price_eur, unit_type)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+                [product.english, product.estonian, product.category, product.weight, product.price, product.unit]
             );
         }
     }
@@ -264,7 +412,7 @@ class DatabaseService {
     async logScrapeAttempt(storeName, ingredient, success, errorMessage = null, responseTime = null) {
         await this.runQuery(
             `INSERT INTO scrape_logs (store_name, ingredient, success, error_message, response_time_ms)
-       VALUES (?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?)`,
             [storeName, ingredient, success, errorMessage, responseTime]
         );
     }
@@ -349,6 +497,161 @@ class DatabaseService {
                 generated_at: new Date().toISOString()
             }, null, 2));
         }
+    }
+
+    /**
+     * Store parsed ingredient data
+     */
+    async storeParsedIngredient(parsedData) {
+        return await this.runQuery(
+            `INSERT INTO parsed_ingredients (
+                original_text, quantity, unit, unit_type, ingredient_name,
+                normalized_quantity, normalized_unit, parse_success, fallback_used
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                parsedData.original,
+                parsedData.quantity,
+                parsedData.unit,
+                parsedData.unitType,
+                parsedData.ingredient,
+                parsedData.normalizedQuantity,
+                parsedData.normalizedUnit,
+                parsedData.parseSuccess ? 1 : 0,
+                parsedData.fallbackUsed ? 1 : 0
+            ]
+        );
+    }
+
+    /**
+     * Store recipe calculation with all ingredient data
+     */
+    async storeRecipeCalculation(calculationData) {
+        // Start transaction for data consistency
+        await this.runQuery('BEGIN TRANSACTION');
+
+        try {
+            // 1. Store main calculation
+            const calculationResult = await this.runQuery(
+                `INSERT INTO recipe_calculations (
+                    recipe_id, recipe_name, total_cost, cost_per_serving,
+                    servings, currency, country, provider_name, calculation_metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    calculationData.recipeId || null,
+                    calculationData.recipeName || null,
+                    calculationData.totalCost,
+                    calculationData.costPerServing,
+                    calculationData.servings,
+                    calculationData.currency,
+                    calculationData.country,
+                    calculationData.provider,
+                    JSON.stringify(calculationData.metadata || {})
+                ]
+            );
+
+            const calculationId = calculationResult.lastID;
+
+            // 2. Store each ingredient
+            for (const ingredient of calculationData.ingredients) {
+                // Store parsed ingredient first
+                const parsedResult = await this.storeParsedIngredient(ingredient.parsedData);
+                const parsedIngredientId = parsedResult.lastID;
+
+                // Store ingredient cost details
+                await this.runQuery(
+                    `INSERT INTO recipe_ingredients (
+                        calculation_id, parsed_ingredient_id, ingredient_cost,
+                        price_per_unit, price_unit, source_store
+                    ) VALUES (?, ?, ?, ?, ?, ?)`,
+                    [
+                        calculationId,
+                        parsedIngredientId,
+                        ingredient.cost,
+                        ingredient.pricePerUnit,
+                        ingredient.priceUnit,
+                        ingredient.sourceStore || null
+                    ]
+                );
+            }
+
+            await this.runQuery('COMMIT');
+            return calculationId;
+
+        } catch (error) {
+            await this.runQuery('ROLLBACK');
+            throw error;
+        }
+    }
+
+    /**
+     * Get recipe calculation history
+     */
+    async getRecipeCalculations(limit = 50) {
+        return await this.getAllQuery(
+            `SELECT rc.*,
+                COUNT(ri.id) as ingredient_count,
+                GROUP_CONCAT(pi.ingredient_name) as ingredients
+            FROM recipe_calculations rc
+            LEFT JOIN recipe_ingredients ri ON rc.id = ri.calculation_id
+            LEFT JOIN parsed_ingredients pi ON ri.parsed_ingredient_id = pi.id
+            GROUP BY rc.id
+            ORDER BY rc.created_at DESC
+            LIMIT ?`,
+            [limit]
+        );
+    }
+
+    /**
+     * Get detailed calculation by ID
+     */
+    async getRecipeCalculationDetails(calculationId) {
+        const calculation = await this.getQuery(
+            `SELECT * FROM recipe_calculations WHERE id = ?`,
+            [calculationId]
+        );
+
+        if (!calculation) return null;
+
+        const ingredients = await this.getAllQuery(
+            `SELECT ri.*, pi.*
+            FROM recipe_ingredients ri
+            JOIN parsed_ingredients pi ON ri.parsed_ingredient_id = pi.id
+            WHERE ri.calculation_id = ?`,
+            [calculationId]
+        );
+
+        return {
+            ...calculation,
+            ingredients
+        };
+    }
+
+    /**
+     * Get parsing statistics
+     */
+    async getParsingStats() {
+        const stats = await this.getQuery(
+            `SELECT
+                COUNT(*) as total_parsed,
+                SUM(CASE WHEN parse_success = 1 THEN 1 ELSE 0 END) as successful_parses,
+                SUM(CASE WHEN fallback_used = 1 THEN 1 ELSE 0 END) as fallback_used,
+                COUNT(DISTINCT ingredient_name) as unique_ingredients
+            FROM parsed_ingredients`
+        );
+
+        const recentFailures = await this.getAllQuery(
+            `SELECT original_text, COUNT(*) as failure_count
+            FROM parsed_ingredients
+            WHERE parse_success = 0
+            GROUP BY original_text
+            ORDER BY failure_count DESC
+            LIMIT 10`
+        );
+
+        return {
+            ...stats,
+            recentFailures
+        };
     }
 
     /**

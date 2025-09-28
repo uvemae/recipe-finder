@@ -185,7 +185,15 @@ app.post('/api/prices/recipe', asyncHandler(async (req, res) => {
         const targetCountry = country || priceServiceFactory.getDefaultCountry();
         const targetServings = servings || 4;
 
-        const costData = await priceProvider.calculateRecipeCost(ingredients, targetCountry, targetServings);
+        // Support optional recipe metadata for database storage
+        const { recipeId, recipeName } = req.body;
+        const costData = await priceProvider.calculateRecipeCost(
+            ingredients,
+            targetCountry,
+            targetServings,
+            recipeId,
+            recipeName
+        );
         res.json({
             success: true,
             data: costData,
@@ -259,6 +267,69 @@ app.get('/api/prices/sources', asyncHandler(async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch price sources',
+            message: error.message
+        });
+    }
+}));
+
+/**
+ * Get ingredient parsing statistics
+ */
+app.get('/api/parsing/stats', asyncHandler(async (req, res) => {
+    try {
+        if (priceProvider.getProviderName() === 'Estonian Grocery Stores') {
+            const stats = await priceProvider.db.getParsingStats();
+            res.json({
+                success: true,
+                data: stats,
+                provider: priceProvider.getProviderName()
+            });
+        } else {
+            res.json({
+                success: true,
+                data: {
+                    message: 'Parsing statistics only available for Estonian provider'
+                },
+                provider: priceProvider.getProviderName()
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching parsing stats:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch parsing statistics',
+            message: error.message
+        });
+    }
+}));
+
+/**
+ * Get recipe calculation history
+ */
+app.get('/api/recipes/calculations', asyncHandler(async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+
+        if (priceProvider.getProviderName() === 'Estonian Grocery Stores') {
+            const calculations = await priceProvider.db.getRecipeCalculations(limit);
+            res.json({
+                success: true,
+                data: calculations,
+                provider: priceProvider.getProviderName()
+            });
+        } else {
+            res.json({
+                success: true,
+                data: [],
+                message: 'Calculation history only available for Estonian provider',
+                provider: priceProvider.getProviderName()
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching calculation history:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch calculation history',
             message: error.message
         });
     }

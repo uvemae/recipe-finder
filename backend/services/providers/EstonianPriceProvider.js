@@ -1,5 +1,6 @@
 const IPriceProvider = require('../interfaces/IPriceProvider');
 const DatabaseService = require('../DatabaseService');
+const IngredientParser = require('../IngredientParser');
 
 /**
  * Estonian grocery stores price provider with database storage
@@ -11,6 +12,7 @@ class EstonianPriceProvider extends IPriceProvider {
         this.providerName = 'Estonian Grocery Stores';
         this.defaultCountry = 'EE';
         this.db = new DatabaseService();
+        this.parser = new IngredientParser();
         this.initialized = false;
 
         // Available Estonian grocery store sources
@@ -18,21 +20,21 @@ class EstonianPriceProvider extends IPriceProvider {
             'selver': {
                 name: 'Selver',
                 baseUrl: 'https://www.selver.ee',
-                searchUrl: '/epood/search?q=',
+                searchUrl: '/search?q=', // Fixed URL pattern
                 description: 'Estonia\'s largest supermarket chain (18.3% market share)',
                 enabled: true
             },
             'rimi': {
                 name: 'Rimi',
                 baseUrl: 'https://www.rimi.ee',
-                searchUrl: '/epood/en/search?q=',
+                searchUrl: '/epood/ee/otsing?query=',
                 description: 'Major Estonian grocery chain (13.4% market share)',
                 enabled: true
             },
             'coop': {
                 name: 'Coop',
                 baseUrl: 'https://ecoop.ee',
-                searchUrl: '/search?q=',
+                searchUrl: '/otsing?s=',
                 description: 'Estonia\'s market leader (24.4% market share) - limited e-commerce',
                 enabled: false // Limited e-commerce availability
             }
@@ -440,7 +442,9 @@ class EstonianPriceProvider extends IPriceProvider {
         // Calculate average price if multiple sources
         if (results.length > 0) {
             const averagePrice = results.reduce((sum, r) => sum + r.price, 0) / results.length;
-            const recipePortionCost = this._calculateRecipePortion(averagePrice, results[0].unit);
+            // Parse the ingredient to get actual quantities (if it's a string with quantities)
+            const parsedIngredient = this.parser.parseIngredient(ingredient);
+            const actualCost = this._calculateActualCost(parsedIngredient, averagePrice, results[0].unit);
 
             return {
                 ingredient: ingredient,
@@ -448,7 +452,8 @@ class EstonianPriceProvider extends IPriceProvider {
                 unit: results[0].unit,
                 currency: 'EUR',
                 country: 'EE',
-                recipePortionCost: Math.round(recipePortionCost * 100) / 100,
+                recipePortionCost: Math.round(actualCost * 100) / 100,
+                parsedData: parsedIngredient,
                 fullUnitCost: Math.round(averagePrice * 100) / 100,
                 sources: results.map(r => r.source),
                 sourceCount: results.length,
@@ -460,7 +465,9 @@ class EstonianPriceProvider extends IPriceProvider {
         const fallbackPrice = this.fallbackPrices[normalizedIngredient.english] ||
             { price: 2.50, unit: 'kg' };
 
-        const recipePortionCost = this._calculateRecipePortion(fallbackPrice.price, fallbackPrice.unit);
+        // Parse the ingredient for fallback calculation too
+        const parsedIngredient = this.parser.parseIngredient(ingredient);
+        const actualCost = this._calculateActualCost(parsedIngredient, fallbackPrice.price, fallbackPrice.unit);
 
         return {
             ingredient: ingredient,
@@ -468,7 +475,8 @@ class EstonianPriceProvider extends IPriceProvider {
             unit: fallbackPrice.unit,
             currency: 'EUR',
             country: 'EE',
-            recipePortionCost: Math.round(recipePortionCost * 100) / 100,
+            recipePortionCost: Math.round(actualCost * 100) / 100,
+            parsedData: parsedIngredient,
             fullUnitCost: fallbackPrice.price,
             sources: ['fallback'],
             sourceCount: 0,
@@ -477,23 +485,40 @@ class EstonianPriceProvider extends IPriceProvider {
     }
 
     /**
-     * Calculate recipe portion cost from full price
-     * @param {number} fullPrice - Full unit price
-     * @param {string} unit - Unit type
-     * @returns {number} Estimated cost for recipe portion
+     * Calculate actual ingredient cost based on parsed quantities
+     * @param {Object} parsedIngredient - Parsed ingredient data
+     * @param {number} pricePerUnit - Price per unit from store
+     * @param {string} priceUnit - Unit that price is quoted in
+     * @returns {number} Actual cost for the ingredient amount needed
      */
-    _calculateRecipePortion(fullPrice, unit) {
-        const portionFactors = {
-            'kg': 0.25,        // 250g per recipe
-            'liter': 0.25,     // 250ml per recipe
-            '10pcs': 0.3,      // 3 eggs per recipe
-            'loaf': 0.33,      // 1/3 of bread loaf
-            '500g': 0.5,       // Half package
-            'piece': 1         // Full piece/item
-        };
+    _calculateActualCost(parsedIngredient, pricePerUnit, priceUnit) {
+        const { normalizedQuantity, normalizedUnit, ingredient } = parsedIngredient;
 
-        const factor = portionFactors[unit] || 0.25;
-        return fullPrice * factor;
+        // Convert the needed quantity to match the price unit
+        let neededQuantity = normalizedQuantity;
+
+        // Handle unit conversions between normalized and price units
+        if (normalizedUnit === 'kg' && priceUnit === 'liter') {
+            // For liquid ingredients quoted by liter but measured by weight
+            // Use approximate density conversion (most liquids ~1kg/L)
+            neededQuantity = normalizedQuantity;
+        } else if (normalizedUnit === 'liter' && priceUnit === 'kg') {
+            // For weight-based pricing of liquids
+            neededQuantity = normalizedQuantity;
+        } else if (normalizedUnit !== priceUnit) {
+            // Try to convert using conversion factor
+            const conversionFactor = this.parser.getConversionFactor(normalizedUnit, priceUnit);
+            if (conversionFactor) {
+                neededQuantity = normalizedQuantity * conversionFactor;
+            }
+        }
+
+        // Calculate the actual cost
+        const actualCost = neededQuantity * pricePerUnit;
+
+        console.log(`[Cost Calc] ${ingredient}: ${normalizedQuantity}${normalizedUnit} @ ${pricePerUnit}EUR/${priceUnit} = ${actualCost.toFixed(3)}EUR`);
+
+        return actualCost;
     }
 
     /**
@@ -517,14 +542,14 @@ class EstonianPriceProvider extends IPriceProvider {
      * @param {number} servings - Number of servings
      * @returns {Promise<Object>} Recipe cost breakdown
      */
-    async calculateRecipeCost(ingredients, country = 'EE', servings = 4) {
+    async calculateRecipeCost(ingredients, country = 'EE', servings = 4, recipeId = null, recipeName = null) {
         const ingredientPrices = await this.getMultipleIngredientPrices(ingredients, country);
 
         const totalCost = ingredientPrices.reduce((sum, price) =>
             sum + price.recipePortionCost, 0
         );
 
-        return {
+        const result = {
             totalCost: Math.round(totalCost * 100) / 100,
             costPerServing: Math.round((totalCost / servings) * 100) / 100,
             currency: 'EUR',
@@ -535,6 +560,41 @@ class EstonianPriceProvider extends IPriceProvider {
             activeSources: this.activeSources,
             sourceConfiguration: this.getAvailableSources()
         };
+
+        // Store calculation in database for tracking and analysis
+        try {
+            const calculationData = {
+                recipeId,
+                recipeName,
+                totalCost: result.totalCost,
+                costPerServing: result.costPerServing,
+                servings,
+                currency: 'EUR',
+                country,
+                provider: this.providerName,
+                metadata: {
+                    activeSources: this.activeSources,
+                    ingredientCount: ingredients.length,
+                    timestamp: new Date().toISOString()
+                },
+                ingredients: ingredientPrices.map(price => ({
+                    parsedData: price.parsedData,
+                    cost: price.recipePortionCost,
+                    pricePerUnit: price.pricePerUnit,
+                    priceUnit: price.unit,
+                    sourceStore: price.sources?.[0] || 'fallback'
+                }))
+            };
+
+            await this.db.storeRecipeCalculation(calculationData);
+            console.log(`[DB] Stored recipe calculation for ${ingredients.length} ingredients`);
+
+        } catch (error) {
+            console.error('Error storing recipe calculation:', error);
+            // Don't fail the calculation if database storage fails
+        }
+
+        return result;
     }
 
     /**
