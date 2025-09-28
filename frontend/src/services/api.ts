@@ -61,14 +61,40 @@ export class ApiService {
   }
 
   /**
-   * Get available API providers (for future use)
+   * Calculate recipe cost using backend price API
+   * @param ingredients - Array of ingredient names
+   * @param servings - Number of servings (default 4)
+   * @param country - Country code (default 'DE' for Germany)
    */
-  static async getProviders(): Promise<{available: string[], current: string, default: string}> {
+  static async calculateRecipeCost(ingredients: string[], servings: number = 4, country: string = 'DE'): Promise<any> {
     try {
-      const response = await fetch(`${API_BASE_URL}/providers`)
-      return await this.handleResponse<{available: string[], current: string, default: string}>(response)
+      const response = await fetch(`${API_BASE_URL}/prices/recipe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ingredients,
+          servings,
+          country
+        })
+      })
+      return await this.handleResponse<any>(response)
     } catch (error) {
-      console.error('Error fetching providers:', error)
+      console.error('Error calculating recipe cost:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get supported countries for pricing
+   */
+  static async getSupportedCountries(): Promise<any> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/prices/countries`)
+      return await this.handleResponse<any>(response)
+    } catch (error) {
+      console.error('Error fetching supported countries:', error)
       throw error
     }
   }

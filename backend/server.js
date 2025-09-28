@@ -3,6 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const RecipeServiceFactory = require('./services/RecipeServiceFactory');
+const PriceServiceFactory = require('./services/PriceServiceFactory');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -11,9 +12,11 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Initialize recipe service
+// Initialize services
 const recipeServiceFactory = new RecipeServiceFactory();
+const priceServiceFactory = new PriceServiceFactory();
 const recipeProvider = recipeServiceFactory.createProvider(); // Uses default provider (TheMealDB)
+const priceProvider = priceServiceFactory.createProvider(); // Uses default provider (Numbeo)
 
 // Error handling middleware
 const asyncHandler = (fn) => (req, res, next) => {
@@ -129,12 +132,99 @@ app.get('/api/providers', (req, res) => {
     res.json({
         success: true,
         data: {
-            available: recipeServiceFactory.getAvailableProviders(),
-            current: recipeProvider.getProviderName(),
-            default: recipeServiceFactory.getDefaultProvider()
+            recipe: {
+                available: recipeServiceFactory.getAvailableProviders(),
+                current: recipeProvider.getProviderName(),
+                default: recipeServiceFactory.getDefaultProvider()
+            },
+            price: {
+                available: priceServiceFactory.getAvailableProviders(),
+                current: priceProvider.getProviderName(),
+                default: priceServiceFactory.getDefaultProvider()
+            }
         }
     });
 });
+
+/**
+ * Get price for a single ingredient
+ */
+app.get('/api/prices/ingredient', asyncHandler(async (req, res) => {
+    try {
+        const ingredient = validateQueryParam(req.query.ingredient, 'Ingredient');
+        const country = req.query.country || priceServiceFactory.getDefaultCountry();
+
+        const priceData = await priceProvider.getIngredientPrice(ingredient, country);
+        res.json({
+            success: true,
+            data: priceData,
+            provider: priceProvider.getProviderName()
+        });
+    } catch (error) {
+        console.error('Error fetching ingredient price:', error);
+        const statusCode = error.message.includes('required') ? 400 : 500;
+        res.status(statusCode).json({
+            success: false,
+            error: 'Failed to fetch ingredient price',
+            message: error.message
+        });
+    }
+}));
+
+/**
+ * Calculate recipe cost
+ */
+app.post('/api/prices/recipe', asyncHandler(async (req, res) => {
+    try {
+        const { ingredients, servings, country } = req.body;
+
+        if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+            throw new Error('Ingredients array is required and must not be empty');
+        }
+
+        const targetCountry = country || priceServiceFactory.getDefaultCountry();
+        const targetServings = servings || 4;
+
+        const costData = await priceProvider.calculateRecipeCost(ingredients, targetCountry, targetServings);
+        res.json({
+            success: true,
+            data: costData,
+            provider: priceProvider.getProviderName()
+        });
+    } catch (error) {
+        console.error('Error calculating recipe cost:', error);
+        const statusCode = error.message.includes('required') || error.message.includes('must') ? 400 : 500;
+        res.status(statusCode).json({
+            success: false,
+            error: 'Failed to calculate recipe cost',
+            message: error.message
+        });
+    }
+}));
+
+/**
+ * Get supported countries for pricing
+ */
+app.get('/api/prices/countries', asyncHandler(async (req, res) => {
+    try {
+        const countries = await priceProvider.getSupportedCountries();
+        res.json({
+            success: true,
+            data: {
+                countries,
+                default: priceServiceFactory.getDefaultCountry()
+            },
+            provider: priceProvider.getProviderName()
+        });
+    } catch (error) {
+        console.error('Error fetching supported countries:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch supported countries',
+            message: error.message
+        });
+    }
+}));
 
 // Global error handler
 app.use((error, req, res, next) => {

@@ -33,24 +33,33 @@
         </div>
 
         <div class="cost-section">
-          <h2>Cost Estimation</h2>
-          <div v-if="costCalculation" class="cost-display">
+          <h2>Cost Estimation (Germany)</h2>
+          <div v-if="costLoading" class="calculating">
+            Calculating costs...
+          </div>
+          <div v-else-if="costCalculation" class="cost-display">
             <div class="total-cost">
-              <strong>Total Cost: ${{ costCalculation.totalCost.toFixed(2) }}</strong>
+              <strong>Total Cost: {{ costCalculation.totalCost }}{{ costCalculation.currency }}</strong>
             </div>
             <div class="cost-per-serving">
-              Cost per serving: ${{ costCalculation.costPerServing.toFixed(2) }}
+              Cost per serving: {{ costCalculation.costPerServing }}{{ costCalculation.currency }}
+            </div>
+            <div class="serving-info">
+              For {{ costCalculation.servings }} servings
             </div>
             <div class="ingredient-costs">
               <h3>Ingredient Breakdown:</h3>
-              <div v-for="cost in costCalculation.ingredientCosts" :key="cost.ingredient" class="ingredient-cost">
-                <span class="ingredient-name">{{ cost.ingredient }}</span>
-                <span class="ingredient-price">${{ cost.pricePerUnit.toFixed(2) }}/{{ cost.unit }}</span>
+              <div v-for="ingredient in costCalculation.ingredientBreakdown" :key="ingredient.ingredient" class="ingredient-cost">
+                <span class="ingredient-name">{{ ingredient.ingredient }}</span>
+                <span class="ingredient-price">
+                  {{ ingredient.recipePortionCost }}{{ ingredient.currency }}
+                  <small>({{ ingredient.fullUnitCost }}{{ ingredient.currency }}/{{ ingredient.unit }})</small>
+                </span>
               </div>
             </div>
           </div>
-          <div v-else class="calculating">
-            Calculating costs...
+          <div v-else class="cost-error">
+            Unable to calculate costs. Please try again later.
           </div>
         </div>
       </div>
@@ -62,53 +71,14 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { ApiService } from '@/services/api'
-import type { Recipe, RecipeCost, IngredientPrice } from '@/types/recipe'
+import type { Recipe } from '@/types/recipe'
 
 const route = useRoute()
 const recipe = ref<Recipe | null>(null)
-const costCalculation = ref<RecipeCost | null>(null)
+const costCalculation = ref<any | null>(null)
 const loading = ref(true)
 const error = ref('')
-
-// Mock pricing data (in a real app, this would come from an API)
-const mockPrices: Record<string, IngredientPrice> = {
-  'spaghetti': { ingredient: 'spaghetti', pricePerUnit: 2.50, unit: 'lb', currency: 'USD' },
-  'eggs': { ingredient: 'eggs', pricePerUnit: 3.00, unit: 'dozen', currency: 'USD' },
-  'bacon': { ingredient: 'bacon', pricePerUnit: 6.50, unit: 'lb', currency: 'USD' },
-  'parmesan cheese': { ingredient: 'parmesan cheese', pricePerUnit: 8.00, unit: 'lb', currency: 'USD' },
-  'black pepper': { ingredient: 'black pepper', pricePerUnit: 4.00, unit: 'oz', currency: 'USD' },
-  'chicken breast': { ingredient: 'chicken breast', pricePerUnit: 5.99, unit: 'lb', currency: 'USD' },
-  'bell peppers': { ingredient: 'bell peppers', pricePerUnit: 1.50, unit: 'each', currency: 'USD' },
-  'onion': { ingredient: 'onion', pricePerUnit: 1.20, unit: 'lb', currency: 'USD' },
-  'soy sauce': { ingredient: 'soy sauce', pricePerUnit: 2.80, unit: 'bottle', currency: 'USD' },
-  'rice': { ingredient: 'rice', pricePerUnit: 3.50, unit: 'lb', currency: 'USD' },
-  'carrots': { ingredient: 'carrots', pricePerUnit: 1.80, unit: 'lb', currency: 'USD' },
-  'celery': { ingredient: 'celery', pricePerUnit: 2.00, unit: 'bunch', currency: 'USD' },
-  'vegetable broth': { ingredient: 'vegetable broth', pricePerUnit: 2.50, unit: 'carton', currency: 'USD' },
-  'tomatoes': { ingredient: 'tomatoes', pricePerUnit: 2.99, unit: 'lb', currency: 'USD' }
-}
-
-const calculateCost = (recipe: Recipe): RecipeCost => {
-  const ingredientCosts: IngredientPrice[] = []
-  let totalCost = 0
-
-  recipe.ingredients.forEach(ingredient => {
-    const price = mockPrices[ingredient.toLowerCase()] ||
-      { ingredient, pricePerUnit: 2.00, unit: 'item', currency: 'USD' }
-
-    ingredientCosts.push(price)
-    // Assume we need about 0.25 units of each ingredient per recipe
-    totalCost += price.pricePerUnit * 0.25
-  })
-
-  return {
-    recipeId: recipe.id,
-    totalCost,
-    costPerServing: totalCost / recipe.servings,
-    currency: 'USD',
-    ingredientCosts
-  }
-}
+const costLoading = ref(false)
 
 const fetchRecipe = async () => {
   try {
@@ -121,13 +91,31 @@ const fetchRecipe = async () => {
 
     // Calculate cost after recipe is loaded
     if (recipe.value) {
-      costCalculation.value = calculateCost(recipe.value)
+      await calculateCost()
     }
   } catch (err) {
     error.value = 'Failed to load recipe. Please try again.'
     console.error('Error fetching recipe:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const calculateCost = async () => {
+  if (!recipe.value) return
+
+  try {
+    costLoading.value = true
+    costCalculation.value = await ApiService.calculateRecipeCost(
+      recipe.value.ingredients,
+      recipe.value.servings,
+      'DE' // Germany as default
+    )
+  } catch (err) {
+    console.error('Error calculating cost:', err)
+    costCalculation.value = null
+  } finally {
+    costLoading.value = false
   }
 }
 
@@ -280,8 +268,27 @@ onMounted(() => {
   color: #42b883;
 }
 
-.calculating {
+.calculating, .cost-error {
   color: #666;
   font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.cost-error {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border-radius: 8px;
+}
+
+.serving-info {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.ingredient-price small {
+  color: #888;
+  font-size: 12px;
 }
 </style>
