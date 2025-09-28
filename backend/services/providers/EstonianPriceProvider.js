@@ -45,50 +45,178 @@ class EstonianPriceProvider extends IPriceProvider {
 
         // Estonian ingredient mappings with local names
         this.estonianIngredients = {
+            // Dairy & Eggs
             'milk': { et: 'piim', category: 'dairy' },
-            'bread': { et: 'leib', category: 'bakery' },
             'butter': { et: 'või', category: 'dairy' },
             'eggs': { et: 'munad', category: 'dairy' },
+            'egg': { et: 'muna', category: 'dairy' },
+            'egg yolk': { et: 'munakollane', category: 'dairy' },
+            'egg yolks': { et: 'munakollased', category: 'dairy' },
             'cheese': { et: 'juust', category: 'dairy' },
+            'cream': { et: 'koor', category: 'dairy' },
+
+            // Meat & Protein
             'chicken': { et: 'kana', category: 'meat' },
             'beef': { et: 'veiseliha', category: 'meat' },
             'pork': { et: 'sealiha', category: 'meat' },
+            'lamb': { et: 'lambaliha', category: 'meat' },
+            'lamb loin': { et: 'lambaliha', category: 'meat' },
+            'lamb loin chops': { et: 'lambaliha', category: 'meat' },
+            'fish': { et: 'kala', category: 'meat' },
+            'chicken stock': { et: 'kanabuljong', category: 'cooking' },
+            'beef stock': { et: 'lihabuljong', category: 'cooking' },
+            'stock': { et: 'buljong', category: 'cooking' },
+
+            // Vegetables
             'potatoes': { et: 'kartulid', category: 'vegetables' },
+            'potato': { et: 'kartulit', category: 'vegetables' },
+            'charlotte potatoes': { et: 'kartulid', category: 'vegetables' },
             'tomatoes': { et: 'tomatid', category: 'vegetables' },
+            'tomato': { et: 'tomat', category: 'vegetables' },
             'onions': { et: 'sibulad', category: 'vegetables' },
+            'onion': { et: 'sibul', category: 'vegetables' },
+            'shallots': { et: 'sibulad', category: 'vegetables' },
+            'shallot': { et: 'sibul', category: 'vegetables' },
             'carrots': { et: 'porgandid', category: 'vegetables' },
+            'carrot': { et: 'porgand', category: 'vegetables' },
+            'turnips': { et: 'kaalikas', category: 'vegetables' },
+            'turnip': { et: 'kaalikas', category: 'vegetables' },
+            'celeriac': { et: 'juurkeller', category: 'vegetables' },
+            'celery': { et: 'seller', category: 'vegetables' },
+            'green beans': { et: 'rohelised oad', category: 'vegetables' },
+            'beans': { et: 'oad', category: 'vegetables' },
+
+            // Herbs & Spices
+            'thyme': { et: 'liivatee', category: 'herbs' },
+            'oregano': { et: 'oregano', category: 'herbs' },
+            'rosemary': { et: 'rosmariini', category: 'herbs' },
+            'parsley': { et: 'petersell', category: 'herbs' },
+            'basil': { et: 'basiilik', category: 'herbs' },
+            'dill': { et: 'till', category: 'herbs' },
+            'salt': { et: 'sool', category: 'spices' },
+            'pepper': { et: 'pipar', category: 'spices' },
+            'black pepper': { et: 'must pipar', category: 'spices' },
+
+            // Cooking essentials
+            'oil': { et: 'õli', category: 'cooking' },
+            'olive oil': { et: 'oliiviõli', category: 'cooking' },
+            'rapeseed oil': { et: 'rapsõli', category: 'cooking' },
+            'flour': { et: 'jahu', category: 'grains' },
+            'plain flour': { et: 'jahu', category: 'grains' },
+            'wheat flour': { et: 'nisujahu', category: 'grains' },
+            'whole wheat': { et: 'täistera nisu', category: 'grains' },
+            'wheat': { et: 'nisu', category: 'grains' },
+            'bread': { et: 'leib', category: 'bakery' },
+            'sugar': { et: 'suhkur', category: 'baking' },
+            'caster sugar': { et: 'suhkur', category: 'baking' },
+
+            // Liquids & Alcohol
+            'wine': { et: 'vein', category: 'alcohol' },
+            'white wine': { et: 'valge vein', category: 'alcohol' },
+            'red wine': { et: 'punane vein', category: 'alcohol' },
+
+            // Pastry & Baking
+            'pastry': { et: 'taigen', category: 'baking' },
+            'puff pastry': { et: 'lehttaigen', category: 'baking' },
+
+            // Condiments
+            'mustard': { et: 'sinep', category: 'condiments' },
+
+            // Fruits
             'apples': { et: 'õunad', category: 'fruits' },
             'bananas': { et: 'banaanid', category: 'fruits' },
+
+            // Grains
             'rice': { et: 'riis', category: 'grains' },
-            'pasta': { et: 'pasta', category: 'grains' },
-            'flour': { et: 'jahu', category: 'grains' },
-            'sugar': { et: 'suhkur', category: 'baking' },
-            'salt': { et: 'sool', category: 'spices' },
-            'oil': { et: 'õli', category: 'cooking' }
+            'pasta': { et: 'pasta', category: 'grains' }
         };
 
         // Fallback prices (realistic Estonian prices in EUR)
         this.fallbackPrices = {
+            // Dairy & Eggs
             'milk': { price: 0.89, unit: 'liter' },
-            'bread': { price: 1.45, unit: 'loaf' },
             'butter': { price: 2.89, unit: '500g' },
             'eggs': { price: 2.45, unit: '10pcs' },
+            'egg': { price: 0.25, unit: 'piece' },
+            'egg yolk': { price: 0.15, unit: 'piece' },
+            'egg yolks': { price: 0.15, unit: 'piece' },
             'cheese': { price: 8.90, unit: 'kg' },
+            'cream': { price: 1.89, unit: 'liter' },
+
+            // Meat & Protein
             'chicken': { price: 5.99, unit: 'kg' },
             'beef': { price: 12.99, unit: 'kg' },
             'pork': { price: 7.49, unit: 'kg' },
+            'lamb': { price: 16.99, unit: 'kg' },
+            'lamb loin': { price: 16.99, unit: 'kg' },
+            'lamb loin chops': { price: 16.99, unit: 'kg' },
+            'fish': { price: 8.99, unit: 'kg' },
+            'chicken stock': { price: 3.49, unit: 'liter' },
+            'beef stock': { price: 4.49, unit: 'liter' },
+            'stock': { price: 3.99, unit: 'liter' },
+
+            // Vegetables
             'potatoes': { price: 1.29, unit: 'kg' },
+            'potato': { price: 1.29, unit: 'kg' },
+            'charlotte potatoes': { price: 1.49, unit: 'kg' },
             'tomatoes': { price: 3.49, unit: 'kg' },
+            'tomato': { price: 3.49, unit: 'kg' },
             'onions': { price: 1.19, unit: 'kg' },
+            'onion': { price: 1.19, unit: 'kg' },
+            'shallots': { price: 2.89, unit: 'kg' },
+            'shallot': { price: 2.89, unit: 'kg' },
             'carrots': { price: 1.39, unit: 'kg' },
+            'carrot': { price: 1.39, unit: 'kg' },
+            'turnips': { price: 1.89, unit: 'kg' },
+            'turnip': { price: 1.89, unit: 'kg' },
+            'celeriac': { price: 2.49, unit: 'kg' },
+            'celery': { price: 3.29, unit: 'kg' },
+            'green beans': { price: 4.99, unit: 'kg' },
+            'beans': { price: 4.99, unit: 'kg' },
+
+            // Herbs & Spices
+            'thyme': { price: 15.99, unit: 'kg' },
+            'oregano': { price: 12.99, unit: 'kg' },
+            'rosemary': { price: 16.99, unit: 'kg' },
+            'parsley': { price: 8.99, unit: 'kg' },
+            'basil': { price: 19.99, unit: 'kg' },
+            'dill': { price: 9.99, unit: 'kg' },
+            'salt': { price: 0.79, unit: 'kg' },
+            'pepper': { price: 24.99, unit: 'kg' },
+            'black pepper': { price: 24.99, unit: 'kg' },
+
+            // Cooking essentials
+            'oil': { price: 2.99, unit: 'liter' },
+            'olive oil': { price: 4.99, unit: 'liter' },
+            'rapeseed oil': { price: 2.79, unit: 'liter' },
+            'flour': { price: 1.29, unit: 'kg' },
+            'plain flour': { price: 1.29, unit: 'kg' },
+            'wheat flour': { price: 1.39, unit: 'kg' },
+            'whole wheat': { price: 1.89, unit: 'kg' },
+            'wheat': { price: 1.89, unit: 'kg' },
+            'bread': { price: 1.45, unit: 'loaf' },
+            'sugar': { price: 1.49, unit: 'kg' },
+            'caster sugar': { price: 1.59, unit: 'kg' },
+
+            // Liquids & Alcohol
+            'wine': { price: 5.99, unit: 'liter' },
+            'white wine': { price: 5.99, unit: 'liter' },
+            'red wine': { price: 6.49, unit: 'liter' },
+
+            // Pastry & Baking
+            'pastry': { price: 3.49, unit: 'kg' },
+            'puff pastry': { price: 3.99, unit: 'kg' },
+
+            // Condiments
+            'mustard': { price: 2.89, unit: 'kg' },
+
+            // Fruits
             'apples': { price: 2.29, unit: 'kg' },
             'bananas': { price: 1.79, unit: 'kg' },
+
+            // Grains
             'rice': { price: 2.49, unit: 'kg' },
-            'pasta': { price: 1.89, unit: '500g' },
-            'flour': { price: 1.29, unit: 'kg' },
-            'sugar': { price: 1.49, unit: 'kg' },
-            'salt': { price: 0.79, unit: 'kg' },
-            'oil': { price: 2.99, unit: 'liter' }
+            'pasta': { price: 1.89, unit: '500g' }
         };
     }
 
@@ -132,10 +260,12 @@ class EstonianPriceProvider extends IPriceProvider {
             .replace(/\s+/g, ' ')
             .trim();
 
-        // Find Estonian equivalent
-        const estonianMatch = Object.entries(this.estonianIngredients).find(([key, data]) =>
-            cleaned.includes(key) || cleaned.includes(data.et)
-        );
+        // Find Estonian equivalent - prioritize longer/more specific matches
+        const estonianMatch = Object.entries(this.estonianIngredients)
+            .sort(([a], [b]) => b.length - a.length) // Sort by length descending
+            .find(([key, data]) =>
+                cleaned.includes(key) || cleaned.includes(data.et)
+            );
 
         if (estonianMatch) {
             const [englishName, estonianData] = estonianMatch;
