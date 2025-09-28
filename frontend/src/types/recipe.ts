@@ -19,6 +19,11 @@ export interface IngredientPrice {
   pricePerUnit: number
   unit: string
   currency: string
+  recipePortionCost: number
+  confidence?: 'high' | 'medium' | 'low' | 'failed'
+  translationFound?: boolean
+  dataSource?: 'store_scraping' | 'fallback_price' | 'api_translation'
+  sources?: string[]
 }
 
 export interface RecipeCost {

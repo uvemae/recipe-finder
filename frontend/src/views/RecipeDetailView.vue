@@ -65,11 +65,44 @@
             </div>
             <div class="ingredient-costs">
               <h3>Ingredient Breakdown:</h3>
-              <div v-for="ingredient in costCalculation.ingredientBreakdown" :key="ingredient.ingredient" class="ingredient-cost">
-                <span class="ingredient-name">{{ ingredient.ingredient }}</span>
-                <span class="ingredient-price">
+              <div class="confidence-legend">
+                <span class="legend-item">
+                  <span class="legend-icon">✅</span>
+                  <span class="legend-text">Verified Estonian store price</span>
+                </span>
+                <span class="legend-item">
+                  <span class="legend-icon">🔄</span>
+                  <span class="legend-text">Translated via API</span>
+                </span>
+                <span class="legend-item">
+                  <span class="legend-icon">⚠️</span>
+                  <span class="legend-text">Estimated price</span>
+                </span>
+              </div>
+              <div v-for="ingredient in costCalculation.ingredientBreakdown" :key="ingredient.ingredient"
+                   class="ingredient-cost"
+                   :class="getConfidenceClass(ingredient)">
+                <span class="ingredient-name">
+                  {{ ingredient.ingredient }}
+                  <span v-if="ingredient.confidence === 'low'" class="confidence-indicator" title="Estimated price - translation not found">
+                    ⚠️
+                  </span>
+                  <span v-else-if="ingredient.confidence === 'medium'" class="confidence-indicator" title="Price from API translation">
+                    🔄
+                  </span>
+                  <span v-else-if="ingredient.confidence === 'high'" class="confidence-indicator" title="Verified Estonian store price">
+                    ✅
+                  </span>
+                </span>
+                <span class="ingredient-price" :class="getPriceClass(ingredient)">
                   {{ ingredient.recipePortionCost }}{{ ingredient.currency }}
-                  <small>({{ ingredient.fullUnitCost }}{{ ingredient.currency }}/{{ ingredient.unit }})</small>
+                  <small>({{ ingredient.pricePerUnit }}{{ ingredient.currency }}/{{ ingredient.unit }})</small>
+                  <small v-if="ingredient.confidence === 'low'" class="fallback-warning">
+                    (estimated)
+                  </small>
+                  <small v-else-if="ingredient.confidence === 'medium'" class="api-warning">
+                    (translated)
+                  </small>
                 </span>
               </div>
             </div>
@@ -135,6 +168,25 @@ const calculateCost = async () => {
   }
 }
 
+const getConfidenceClass = (ingredient: any) => {
+  const confidence = ingredient.confidence || 'medium'
+  return {
+    'confidence-high': confidence === 'high',
+    'confidence-medium': confidence === 'medium',
+    'confidence-low': confidence === 'low',
+    'confidence-failed': confidence === 'failed'
+  }
+}
+
+const getPriceClass = (ingredient: any) => {
+  const confidence = ingredient.confidence || 'medium'
+  return {
+    'price-verified': confidence === 'high',
+    'price-translated': confidence === 'medium',
+    'price-estimated': confidence === 'low' || confidence === 'failed'
+  }
+}
+
 onMounted(() => {
   fetchRecipe()
 })
@@ -142,7 +194,7 @@ onMounted(() => {
 
 <style scoped>
 .recipe-detail {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
 }
@@ -420,5 +472,77 @@ onMounted(() => {
 .ingredient-price small {
   color: #888;
   font-size: 12px;
+}
+
+/* Confidence indicators */
+.confidence-indicator {
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.confidence-high {
+  border-left: 4px solid #28a745;
+}
+
+.confidence-medium {
+  border-left: 4px solid #ffc107;
+}
+
+.confidence-low {
+  border-left: 4px solid #dc3545;
+  background-color: #fff5f5;
+}
+
+.confidence-failed {
+  border-left: 4px solid #6c757d;
+  background-color: #f8f9fa;
+}
+
+/* Price styling based on confidence */
+.price-verified {
+  color: #28a745;
+  font-weight: 500;
+}
+
+.price-translated {
+  color: #ffc107;
+  font-weight: 500;
+}
+
+.price-estimated {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.fallback-warning {
+  color: #dc3545 !important;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.api-warning {
+  color: #ffc107 !important;
+  font-style: italic;
+  font-weight: 500;
+}
+
+/* Enhanced ingredient cost styling */
+.ingredient-cost {
+  transition: all 0.3s ease;
+  padding: 12px;
+  margin: 8px 0;
+  border-radius: 8px;
+  border-left: 4px solid transparent;
+}
+
+.ingredient-cost:hover {
+  background-color: #f8f9fa;
+  transform: translateX(4px);
+}
+
+.ingredient-name {
+  display: flex;
+  align-items: center;
+  flex: 1;
 }
 </style>

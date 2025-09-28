@@ -1,6 +1,7 @@
 const IPriceProvider = require('../interfaces/IPriceProvider');
 const DatabaseService = require('../DatabaseService');
 const IngredientParser = require('../IngredientParser');
+const EstonianTranslationService = require('../EstonianTranslationService');
 
 /**
  * Estonian grocery stores price provider with database storage
@@ -13,6 +14,7 @@ class EstonianPriceProvider extends IPriceProvider {
         this.defaultCountry = 'EE';
         this.db = new DatabaseService();
         this.parser = new IngredientParser();
+        this.translator = new EstonianTranslationService();
         this.initialized = false;
 
         // Available Estonian grocery store sources
@@ -249,11 +251,11 @@ class EstonianPriceProvider extends IPriceProvider {
     }
 
     /**
-     * Normalize ingredient name for Estonian lookup
+     * Normalize ingredient name for Estonian lookup (sync version for simple cases)
      * @param {string} ingredient - Raw ingredient name
      * @returns {Object} Normalized ingredient info
      */
-    _normalizeIngredient(ingredient) {
+    _normalizeIngredientSync(ingredient) {
         const cleaned = ingredient.toLowerCase()
             .replace(/^\d+[\s\/]*\w*\s+/g, '') // Remove quantities
             .replace(/\b(cup|cups|tsp|tbsp|tablespoon|teaspoon|pound|pounds|oz|ounce|clove|cloves|sprig|sprigs|leaf|leaves|fresh|dried|chopped|diced|minced|crushed|peeled|large|medium|small|red|white|green|yellow)\b/gi, '')
@@ -273,7 +275,10 @@ class EstonianPriceProvider extends IPriceProvider {
                 english: englishName,
                 estonian: estonianData.et,
                 category: estonianData.category,
-                searchTerm: estonianData.et
+                searchTerm: estonianData.et,
+                translationFound: true,
+                confidence: 'high',
+                translationSource: 'local'
             };
         }
 
@@ -281,7 +286,75 @@ class EstonianPriceProvider extends IPriceProvider {
             english: cleaned,
             estonian: cleaned,
             category: 'other',
-            searchTerm: cleaned
+            searchTerm: cleaned,
+            translationFound: false,
+            confidence: 'low',
+            translationSource: 'none'
+        };
+    }
+
+    /**
+     * Normalize ingredient name for Estonian lookup (async version with API fallback)
+     * @param {string} ingredient - Raw ingredient name
+     * @returns {Promise<Object>} Normalized ingredient info
+     */
+    async _normalizeIngredient(ingredient) {
+        const cleaned = ingredient.toLowerCase()
+            .replace(/^\d+[\s\/]*\w*\s+/g, '') // Remove quantities
+            .replace(/\b(cup|cups|tsp|tbsp|tablespoon|teaspoon|pound|pounds|oz|ounce|clove|cloves|sprig|sprigs|leaf|leaves|fresh|dried|chopped|diced|minced|crushed|peeled|large|medium|small|red|white|green|yellow)\b/gi, '')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        // Find Estonian equivalent - prioritize longer/more specific matches
+        const estonianMatch = Object.entries(this.estonianIngredients)
+            .sort(([a], [b]) => b.length - a.length) // Sort by length descending
+            .find(([key, data]) =>
+                cleaned.includes(key) || cleaned.includes(data.et)
+            );
+
+        if (estonianMatch) {
+            const [englishName, estonianData] = estonianMatch;
+            return {
+                english: englishName,
+                estonian: estonianData.et,
+                category: estonianData.category,
+                searchTerm: estonianData.et,
+                translationFound: true,
+                confidence: 'high'
+            };
+        }
+
+        // No translation found in local dictionary - try API translation
+        try {
+            console.log(`[Translation API] Attempting translation for: ${cleaned}`);
+            const apiResult = await this.translator.translateIngredient(cleaned);
+
+            if (apiResult.success) {
+                console.log(`[Translation API] Success: ${cleaned} → ${apiResult.translated}`);
+                return {
+                    english: cleaned,
+                    estonian: apiResult.translated,
+                    category: 'other',
+                    searchTerm: apiResult.translated,
+                    translationFound: true,
+                    confidence: apiResult.confidence,
+                    translationSource: 'api'
+                };
+            }
+        } catch (error) {
+            console.error('[Translation API] Error:', error);
+        }
+
+        // No translation found anywhere - will use fallback prices
+        console.log(`[Translation] No translation found for: ${cleaned}`);
+        return {
+            english: cleaned,
+            estonian: cleaned,
+            category: 'other',
+            searchTerm: cleaned,
+            translationFound: false,
+            confidence: 'low',
+            translationSource: 'none'
         };
     }
 
@@ -340,7 +413,7 @@ class EstonianPriceProvider extends IPriceProvider {
             await this.db.storePriceData({
                 storeName: 'selver',
                 ingredient: searchTerm,
-                normalizedIngredient: this._normalizeIngredient(searchTerm).english,
+                normalizedIngredient: this._normalizeIngredientSync(searchTerm).english,
                 price: mockResult.price,
                 unit: mockResult.unit,
                 currency: mockResult.currency,
@@ -406,7 +479,7 @@ class EstonianPriceProvider extends IPriceProvider {
             await this.db.storePriceData({
                 storeName: 'rimi',
                 ingredient: searchTerm,
-                normalizedIngredient: this._normalizeIngredient(searchTerm).english,
+                normalizedIngredient: this._normalizeIngredientSync(searchTerm).english,
                 price: mockResult.price,
                 unit: mockResult.unit,
                 currency: mockResult.currency,
@@ -478,7 +551,7 @@ class EstonianPriceProvider extends IPriceProvider {
             await this.db.storePriceData({
                 storeName: 'coop',
                 ingredient: searchTerm,
-                normalizedIngredient: this._normalizeIngredient(searchTerm).english,
+                normalizedIngredient: this._normalizeIngredientSync(searchTerm).english,
                 price: mockResult.price,
                 unit: mockResult.unit,
                 currency: mockResult.currency,
@@ -508,7 +581,7 @@ class EstonianPriceProvider extends IPriceProvider {
      * @returns {number} Price in EUR
      */
     _getRandomPrice(product, multiplier = 1.0) {
-        const normalizedProduct = this._normalizeIngredient(product);
+        const normalizedProduct = this._normalizeIngredientSync(product);
         const fallbackPrice = this.fallbackPrices[normalizedProduct.english];
 
         if (fallbackPrice) {
@@ -527,7 +600,7 @@ class EstonianPriceProvider extends IPriceProvider {
      * @returns {string} Unit
      */
     _getUnitForProduct(product) {
-        const normalizedProduct = this._normalizeIngredient(product);
+        const normalizedProduct = this._normalizeIngredientSync(product);
         const fallbackPrice = this.fallbackPrices[normalizedProduct.english];
         return fallbackPrice ? fallbackPrice.unit : 'kg';
     }
@@ -543,7 +616,7 @@ class EstonianPriceProvider extends IPriceProvider {
             throw new Error('Estonian provider only supports Estonia (EE)');
         }
 
-        const normalizedIngredient = this._normalizeIngredient(ingredient);
+        const normalizedIngredient = await this._normalizeIngredient(ingredient);
         const searchTerm = normalizedIngredient.searchTerm;
 
         const results = [];
@@ -587,7 +660,11 @@ class EstonianPriceProvider extends IPriceProvider {
                 fullUnitCost: Math.round(averagePrice * 100) / 100,
                 sources: results.map(r => r.source),
                 sourceCount: results.length,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                // Confidence tracking
+                translationFound: normalizedIngredient.translationFound,
+                confidence: normalizedIngredient.confidence,
+                dataSource: 'store_scraping'
             };
         }
 
@@ -610,7 +687,11 @@ class EstonianPriceProvider extends IPriceProvider {
             fullUnitCost: fallbackPrice.price,
             sources: ['fallback'],
             sourceCount: 0,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            // Confidence tracking for fallback
+            translationFound: normalizedIngredient.translationFound,
+            confidence: normalizedIngredient.translationFound ? 'medium' : 'low',
+            dataSource: 'fallback_price'
         };
     }
 
