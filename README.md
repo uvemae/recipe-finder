@@ -1,6 +1,15 @@
 # Recipe Finder
 
 A full-stack recipe cost calculator designed for the Estonian market. Search for recipes and calculate their cost using real-time grocery store prices from Selver, Rimi, and Coop - helping Estonian home cooks budget their meals with accurate local pricing.
+(*NOTE: Currently some data is mocked).
+
+# Screenshots
+
+![scr_1.jpg](pic/screenshots/scr_1.jpg)
+
+![scr_2.jpg](pic/screenshots/scr_2.jpg)
+
+![scr_3.jpg](pic/screenshots/scr_3.jpg)
 
 ## Features
 
